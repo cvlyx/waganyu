@@ -18,6 +18,22 @@ import { useData, type Message } from "@/context/DataContext";
 import { useColors } from "@/hooks/useColors";
 import { formatTimeAgo } from "@/utils/format";
 
+function DateSeparator({ timestamp }: { timestamp: string }) {
+  const colors = useColors();
+  const date = new Date(timestamp);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
+  const label = isToday ? "Today" : isYesterday ? "Yesterday" : date.toLocaleDateString("en-MW", { day: "numeric", month: "short" });
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 12, paddingHorizontal: 16 }}>
+      <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+      <Text style={{ fontSize: 11, fontFamily: "Poppins_500Medium", color: colors.mutedForeground, marginHorizontal: 10 }}>{label}</Text>
+      <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+    </View>
+  );
+}
+
 function MessageBubble({ message, isMe }: { message: Message; isMe: boolean }) {
   const colors = useColors();
   const styles = StyleSheet.create({
@@ -101,6 +117,19 @@ export default function ChatScreen() {
   ];
 
   const allMessages = [...SAMPLE_MESSAGES, ...messages];
+
+  // Group messages with date separators
+  type ChatItem = { type: "message"; data: Message } | { type: "date"; key: string; timestamp: string };
+  const chatItems: ChatItem[] = [];
+  let lastDate = "";
+  for (const msg of allMessages) {
+    const d = new Date(msg.timestamp).toDateString();
+    if (d !== lastDate) {
+      chatItems.push({ type: "date", key: `date-${d}`, timestamp: msg.timestamp });
+      lastDate = d;
+    }
+    chatItems.push({ type: "message", data: msg });
+  }
 
   function handleSend() {
     if (!text.trim() || !user) return;
@@ -210,12 +239,14 @@ export default function ChatScreen() {
       >
         <FlatList
           ref={flatRef}
-          data={allMessages}
-          keyExtractor={(m) => m.id}
+          data={chatItems}
+          keyExtractor={(item) => item.type === "date" ? item.key : item.data.id}
           style={styles.messages}
-          renderItem={({ item }) => (
-            <MessageBubble message={item} isMe={item.senderId === user?.id} />
-          )}
+          renderItem={({ item }) =>
+            item.type === "date"
+              ? <DateSeparator timestamp={item.timestamp} />
+              : <MessageBubble message={item.data} isMe={item.data.senderId === user?.id} />
+          }
           onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 8 }}

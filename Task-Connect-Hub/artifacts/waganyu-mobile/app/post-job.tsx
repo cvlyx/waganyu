@@ -40,10 +40,21 @@ export default function PostJobScreen() {
   const [location, setLocation] = useState(user?.location ?? "Lilongwe, Malawi");
   const [urgent, setUrgent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ title?: string; description?: string; budget?: string }>({});
+
+  function validate() {
+    const e: typeof errors = {};
+    if (!title.trim()) e.title = "Job title is required";
+    if (!description.trim()) e.description = "Description is required";
+    if (!budget) e.budget = "Budget is required";
+    else if (isNaN(Number(budget)) || Number(budget) <= 0) e.budget = "Enter a valid amount";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
 
   async function handlePost() {
-    if (!title.trim() || !description.trim() || !budget) {
-      Alert.alert("Error", "Please fill in all required fields");
+    if (!validate()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -169,6 +180,10 @@ export default function PostJobScreen() {
     postBtnText: {
       fontSize: 16, fontWeight: "700" as const, color: "#FFFFFF", fontFamily: "Poppins_700Bold",
     },
+    errorText: {
+      fontSize: 12, color: "#DC2626", fontFamily: "Poppins_400Regular", marginTop: -14, marginBottom: 12,
+    },
+    inputError: { borderColor: "#DC2626" },
   });
 
   return (
@@ -192,23 +207,25 @@ export default function PostJobScreen() {
           <Animated.View entering={FadeInDown.duration(400)} style={styles.content}>
             <Text style={styles.label}>Job Title *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, errors.title && styles.inputError]}
               placeholder="e.g. Fix leaking kitchen sink"
               placeholderTextColor={colors.mutedForeground}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={t => { setTitle(t); if (errors.title) setErrors(e => ({ ...e, title: undefined })); }}
             />
+            {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
             <Text style={styles.label}>Description *</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, errors.description && styles.inputError]}
               placeholder="Describe what needs to be done, any requirements, timeline..."
               placeholderTextColor={colors.mutedForeground}
               value={description}
-              onChangeText={setDescription}
+              onChangeText={t => { setDescription(t); if (errors.description) setErrors(e => ({ ...e, description: undefined })); }}
               multiline
               numberOfLines={4}
             />
+            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
 
             <Text style={styles.label}>Category</Text>
             <View style={styles.catGrid}>
@@ -237,11 +254,11 @@ export default function PostJobScreen() {
             <Text style={styles.label}>Budget (MK) *</Text>
             <View style={styles.budgetRow}>
               <TextInput
-                style={styles.budgetInput}
+                style={[styles.budgetInput, errors.budget && styles.inputError]}
                 placeholder="e.g. 5000"
                 placeholderTextColor={colors.mutedForeground}
                 value={budget}
-                onChangeText={setBudget}
+                onChangeText={t => { setBudget(t); if (errors.budget) setErrors(e => ({ ...e, budget: undefined })); }}
                 keyboardType="numeric"
               />
               <View style={styles.budgetTypeRow}>
@@ -267,6 +284,7 @@ export default function PostJobScreen() {
                 ))}
               </View>
             </View>
+            {errors.budget && <Text style={styles.errorText}>{errors.budget}</Text>}
 
             <Text style={styles.label}>Location</Text>
             <TextInput

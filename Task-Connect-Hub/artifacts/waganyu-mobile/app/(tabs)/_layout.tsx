@@ -4,6 +4,7 @@ import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
@@ -58,6 +59,11 @@ function ClassicTabLayout() {
           borderTopColor: colors.tabBarBorder,
           elevation: 0,
           height: isWeb ? 84 : undefined,
+          // Android: add subtle shadow instead of flat look
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: {
           fontFamily: "Poppins_500Medium",
@@ -67,12 +73,20 @@ function ClassicTabLayout() {
           isIOS ? (
             <BlurView
               intensity={100}
-              tint={isDark ? "dark" : "light"}
+              tint="light"
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBar }]} />
-          ) : null,
+          ) : (
+            // Android — solid white with top border
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBar, borderTopWidth: 1, borderTopColor: colors.tabBarBorder }]} />
+          ),
+      }}
+      screenListeners={{
+        tabPress: () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        },
       }}
     >
       <Tabs.Screen

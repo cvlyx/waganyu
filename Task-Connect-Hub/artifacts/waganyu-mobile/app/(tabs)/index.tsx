@@ -1,13 +1,14 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { JobCard } from "@/components/JobCard";
 import { WorkerCard } from "@/components/WorkerCard";
+import { JobCardSkeleton, WorkerCardSkeleton } from "@/components/Skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useData, type JobCategory } from "@/context/DataContext";
 import { useColors } from "@/hooks/useColors";
@@ -27,7 +28,14 @@ export default function HomeScreen() {
   const { jobs, workers, unreadNotificationCount, unreadMessageCount } = useData();
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState<JobCategory | "All">("All");
+  const [loading, setLoading] = useState(true);
   const topInset = Platform.OS === "web" ? 67 : insets.top;
+
+  // Simulate initial load
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = jobs.filter((j) => {
     const q = search.toLowerCase();
@@ -143,9 +151,11 @@ export default function HomeScreen() {
             <Text style={[s.sectionTitle, { color: C.foreground }]}>{cat === "All" ? "Recent Jobs" : cat}</Text>
             <Text style={[s.sectionCount, { color: C.mutedForeground }]}>{filtered.length} found</Text>
           </View>
-          {filtered.length === 0
-            ? <View style={s.empty}><Feather name="search" size={32} color={C.mutedForeground} /><Text style={[s.emptyText, { color: C.mutedForeground }]}>No jobs found.</Text></View>
-            : filtered.map(j => <JobCard key={j.id} job={j} />)
+          {loading
+            ? [1,2,3].map(i => <JobCardSkeleton key={i} />)
+            : filtered.length === 0
+              ? <View style={s.empty}><Feather name="search" size={32} color={C.mutedForeground} /><Text style={[s.emptyText, { color: C.mutedForeground }]}>No jobs found.</Text></View>
+              : filtered.map(j => <JobCard key={j.id} job={j} />)
           }
         </View>
 
@@ -157,12 +167,22 @@ export default function HomeScreen() {
               <Text style={[s.seeAll, { color: C.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={workers.slice(0, 6)} horizontal showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20 }}
-            keyExtractor={w => w.id}
-            renderItem={({ item }) => <WorkerCard worker={item} horizontal />}
-          />
+          {loading
+            ? <FlatList
+                data={[1,2,3]}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20 }}
+                keyExtractor={i => String(i)}
+                renderItem={() => <WorkerCardSkeleton />}
+              />
+            : <FlatList
+                data={workers.slice(0, 6)} horizontal showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20 }}
+                keyExtractor={w => w.id}
+                renderItem={({ item }) => <WorkerCard worker={item} horizontal />}
+              />
+          }
         </View>
 
       </ScrollView>
