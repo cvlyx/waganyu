@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "VPXi7aqzbA53_ZncGbmoD"
+uri = "file://artifacts/waganyu-mobile/assets/images/icon.png"
+type = "image"
+title = "waganyu app icon"
+
+[[generated]]
+id = "O64MnWC75IqY1gc9jpqku"
+uri = "file://artifacts/waganyu-mobile/assets/images/onboarding1.png"
+type = "image"
+title = "onboarding handshake"
+
+[[generated]]
+id = "703VIpWmp0lR8Oqpvm_Z1"
+uri = "file://artifacts/waganyu-mobile/assets/images/onboarding2.png"
+type = "image"
+title = "skilled worker profile"
