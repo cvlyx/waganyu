@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Zap, Briefcase, Users, Star, Shield, MessageCircle,
   Lock, ArrowRight, Menu, X, CheckCircle, MapPin,
@@ -7,6 +8,7 @@ import {
   Paintbrush, ChefHat, Monitor,
 } from "lucide-react";
 import clsx from "clsx";
+import { useAuth } from "../context/AuthContext";
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -95,30 +97,30 @@ function Navbar() {
     )}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
             <Zap size={16} className="text-white" />
           </div>
           <span className="text-lg font-bold text-foreground">Waganyu</span>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map(l => (
-            <a key={l} href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link key={l} to="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {l}
-            </a>
+            </Link>
           ))}
         </nav>
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <a href="#" className="text-sm font-semibold text-foreground hover:text-primary transition-colors px-4 py-2">
+          <Link to="/login" className="text-sm font-semibold text-foreground hover:text-primary transition-colors px-4 py-2">
             Sign In
-          </a>
-          <a href="#" className="text-sm font-semibold text-white gradient-primary px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+          </Link>
+          <Link to="/signup" className="text-sm font-semibold text-white gradient-primary px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
             Get Started
-          </a>
+          </Link>
         </div>
 
         {/* Mobile menu toggle */}
@@ -135,11 +137,11 @@ function Navbar() {
           className="md:hidden bg-white border-b border-border px-6 pb-6 pt-2 flex flex-col gap-4"
         >
           {NAV_LINKS.map(l => (
-            <a key={l} href="#" className="text-sm font-medium text-foreground py-1">{l}</a>
+            <Link key={l} to="#" className="text-sm font-medium text-foreground py-1">{l}</Link>
           ))}
           <div className="flex flex-col gap-3 pt-2 border-t border-border">
-            <a href="#" className="text-sm font-semibold text-center text-foreground py-2.5 border border-border rounded-xl">Sign In</a>
-            <a href="#" className="text-sm font-semibold text-center text-white gradient-primary py-2.5 rounded-xl">Get Started Free</a>
+            <Link to="/login" className="text-sm font-semibold text-center text-foreground py-2.5 border border-border rounded-xl">Sign In</Link>
+            <Link to="/signup" className="text-sm font-semibold text-center text-white gradient-primary py-2.5 rounded-xl">Get Started Free</Link>
           </div>
         </motion.div>
       )}
@@ -200,13 +202,13 @@ function Hero() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 mb-12"
             >
-              <a href="#" className="inline-flex items-center justify-center gap-2 gradient-primary text-white font-semibold text-base px-8 py-4 rounded-xl hover:opacity-90 transition-all hover:shadow-elevated group">
+              <Link to="/signup" className="inline-flex items-center justify-center gap-2 gradient-primary text-white font-semibold text-base px-8 py-4 rounded-xl hover:opacity-90 transition-all hover:shadow-elevated group">
                 Get Started Free
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </a>
-              <a href="#" className="inline-flex items-center justify-center gap-2 bg-white border-2 border-border text-foreground font-semibold text-base px-8 py-4 rounded-xl hover:border-primary hover:text-primary transition-all">
+              </Link>
+              <Link to="/login" className="inline-flex items-center justify-center gap-2 bg-white border-2 border-border text-foreground font-semibold text-base px-8 py-4 rounded-xl hover:border-primary hover:text-primary transition-all">
                 I already have an account
-              </a>
+              </Link>
             </motion.div>
 
             {/* Trust row */}
@@ -266,12 +268,12 @@ function Categories() {
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-3">
           {CATEGORIES.map((cat, i) => (
             <FadeUp key={cat.label} delay={i * 0.05}>
-              <a href="#" className="group flex flex-col items-center gap-3 p-4 rounded-2xl border border-border bg-background hover:border-primary hover:bg-primary-light transition-all cursor-pointer">
+              <Link to="#" className="group flex flex-col items-center gap-3 p-4 rounded-2xl border border-border bg-background hover:border-primary hover:bg-primary-light transition-all cursor-pointer">
                 <div className="w-11 h-11 rounded-xl bg-primary-light group-hover:bg-primary flex items-center justify-center transition-colors">
                   <cat.icon size={20} className="text-primary group-hover:text-white transition-colors" />
                 </div>
                 <span className="text-xs font-semibold text-foreground text-center leading-tight">{cat.label}</span>
-              </a>
+              </Link>
             </FadeUp>
           ))}
         </div>
@@ -328,9 +330,9 @@ function Features() {
             <p className="text-base text-muted-foreground leading-relaxed mb-8">
               We've built every feature with one goal in mind — making it effortless to get work done and get paid, safely and reliably across Malawi.
             </p>
-            <a href="#" className="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:gap-3 transition-all">
+            <Link to="#" className="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:gap-3 transition-all">
               Learn more about how we work <ArrowRight size={16} />
-            </a>
+            </Link>
           </FadeUp>
 
           {/* Right */}
@@ -417,13 +419,13 @@ function CTABanner() {
               Whether you need to hire someone or find work — Waganyu connects you with the right people, fast.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#" className="inline-flex items-center justify-center gap-2 bg-white text-primary font-bold text-base px-8 py-4 rounded-xl hover:bg-primary-light transition-colors group">
+              <Link to="/signup" className="inline-flex items-center justify-center gap-2 bg-white text-primary font-bold text-base px-8 py-4 rounded-xl hover:bg-primary-light transition-colors group">
                 Create Free Account
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </a>
-              <a href="#" className="inline-flex items-center justify-center gap-2 bg-white/15 border border-white/30 text-white font-semibold text-base px-8 py-4 rounded-xl hover:bg-white/25 transition-colors">
+              </Link>
+              <Link to="#" className="inline-flex items-center justify-center gap-2 bg-white/15 border border-white/30 text-white font-semibold text-base px-8 py-4 rounded-xl hover:bg-white/25 transition-colors">
                 Download the App
-              </a>
+              </Link>
             </div>
           </div>
         </FadeUp>
@@ -463,7 +465,7 @@ function Footer() {
               <ul className="flex flex-col gap-2.5">
                 {col.links.map(l => (
                   <li key={l}>
-                    <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{l}</a>
+                    <Link to="#" className="text-sm text-white/50 hover:text-white transition-colors">{l}</Link>
                   </li>
                 ))}
               </ul>
@@ -483,6 +485,37 @@ function Footer() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.profileComplete) {
+        navigate("/dashboard");
+      } else {
+        navigate("/setup");
+      }
+    }
+  }, [user, isLoading, navigate]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#191414] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render landing page for authenticated users
+  if (user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen">
       <Navbar />

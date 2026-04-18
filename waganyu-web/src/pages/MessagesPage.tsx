@@ -1,0 +1,228 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { 
+  MessageCircle, Search, Send, Paperclip, Phone, 
+  Video, MoreVertical, Check, CheckCheck, Clock
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import AppNavigation from "../components/AppNavigation";
+
+interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: Date;
+  read: boolean;
+  isOwn: boolean;
+}
+
+interface Conversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  participantAvatar: string;
+  lastMessage: string;
+  lastMessageTime: Date;
+  unreadCount: number;
+  isOnline: boolean;
+}
+
+const mockConversations: Conversation[] = [
+  {
+    id: "1",
+    participantId: "worker1",
+    participantName: "John Banda",
+    participantAvatar: "JB",
+    lastMessage: "Thanks for hiring me! I'll be there tomorrow at 9 AM",
+    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5),
+    unreadCount: 2,
+    isOnline: true
+  },
+  {
+    id: "2", 
+    participantId: "worker2",
+    participantName: "Mary Phiri",
+    participantAvatar: "MP",
+    lastMessage: "Can you provide more details about plumbing job?",
+    lastMessageTime: new Date(Date.now() - 1000 * 60 * 30),
+    unreadCount: 1,
+    isOnline: false
+  },
+  {
+    id: "3", 
+    participantId: "worker3", 
+    participantName: "Samuel Chikapa",
+    participantAvatar: "SC",
+    lastMessage: "I've completed electrical work. Please check and confirm.",
+    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    unreadCount: 0,
+    isOnline: true
+  }
+];
+
+const mockMessages: Message[] = [
+  {
+    id: "1",
+    senderId: "worker1",
+    senderName: "John Banda",
+    content: "Hi! I'm available for the electrical job you posted.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
+    read: true,
+    isOwn: false
+  },
+  {
+    id: "2",
+    senderId: "user",
+    senderName: "You",
+    content: "Great! When can you start?",
+    timestamp: new Date(Date.now() - 1000 * 60 * 50),
+    read: true,
+    isOwn: true
+  },
+  {
+    id: "3",
+    senderId: "worker1",
+    senderName: "John Banda",
+    content: "Thanks for hiring me! I'll be there tomorrow at 9 AM",
+    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    read: false,
+    isOwn: false
+  }
+];
+
+export default function MessagesPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      let filtered = mockConversations.filter(conv => 
+        conv.participantName.toLowerCase().includes(search.toLowerCase())
+      );
+      setConversations(filtered);
+      setLoading(false);
+    }, 500);
+  }, [search]);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      // Simulate loading messages for selected conversation
+      setMessages(mockMessages);
+    }
+  }, [selectedConversation]);
+
+  const formatTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
+
+  const sendMessage = () => {
+    if (!newMessage.trim()) return;
+
+    const message: Message = {
+      id: Date.now().toString(),
+      senderId: "user",
+      senderName: "You",
+      content: newMessage.trim(),
+      timestamp: new Date(),
+      read: true,
+      isOwn: true
+    };
+
+    setMessages(prev => [...prev, message]);
+    setNewMessage("");
+  };
+
+  return (
+    <div className="min-h-screen bg-[#191414]">
+      {/* Header */}
+      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-bold text-white mb-3">Messages</h2>
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#B3B3B3]" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-[#191414] border border-[#404040] rounded-xl pl-10 pr-4 py-2 text-white placeholder-[#B3B3B3] focus:outline-none focus:border-[#1DB954]"
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Conversations List */}
+      <main className="max-w-4xl mx-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white">Loading conversations...</p>
+            </div>
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="text-center py-20">
+            <MessageCircle size={48} className="mx-auto text-[#B3B3B3] mb-4" />
+            <h3 className="text-white font-semibold mb-2">No conversations yet</h3>
+            <p className="text-[#B3B3B3] text-sm">Start messaging workers or clients</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-[#404040]">
+            {conversations.map(conv => (
+              <motion.div
+                key={conv.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ backgroundColor: "#282828" }}
+                onClick={() => navigate(`/chat/${conv.id}`)}
+                className="flex items-center gap-4 p-6 cursor-pointer transition-colors"
+              >
+                <div className="relative">
+                  <div className="w-14 h-14 bg-[#1DB954] rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">{conv.participantAvatar}</span>
+                  </div>
+                  {conv.isOnline && (
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-[#191414]"></div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-semibold text-white text-lg">{conv.participantName}</h3>
+                    <span className="text-xs text-[#B3B3B3]">{formatTime(conv.lastMessageTime)}</span>
+                  </div>
+                  <p className="text-sm text-[#B3B3B3] truncate">{conv.lastMessage}</p>
+                </div>
+                {conv.unreadCount > 0 && (
+                  <span className="bg-[#1DB954] text-white text-sm px-3 py-1 rounded-full font-semibold">
+                    {conv.unreadCount}
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
+      
+      {/* Navigation */}
+      <AppNavigation />
+    </div>
+  );
+}

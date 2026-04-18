@@ -1,0 +1,460 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { 
+  User, MapPin, Mail, Phone, Star, Briefcase, 
+  Edit, Camera, Award, TrendingUp, Settings,
+  CheckCircle, X, Upload, Save, LogOut
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import AppNavigation from "../components/AppNavigation";
+import ConfirmModal from "../components/ConfirmModal";
+
+interface ProfileStats {
+  totalJobs: number;
+  completedJobs: number;
+  averageRating: number;
+  totalEarnings: number;
+  responseTime: string;
+}
+
+const mockStats: ProfileStats = {
+  totalJobs: 47,
+  completedJobs: 45,
+  averageRating: 4.8,
+  totalEarnings: 450000,
+  responseTime: "2 hours"
+};
+
+const mockReviews = [
+  {
+    id: "1",
+    reviewerName: "Alice Mwale",
+    reviewerAvatar: "AM",
+    rating: 5,
+    comment: "Excellent work! Very professional and completed the electrical installation on time.",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+    jobTitle: "Electrical Installation"
+  },
+  {
+    id: "2",
+    reviewerName: "Bob Banda",
+    reviewerAvatar: "BB", 
+    rating: 4,
+    comment: "Good quality plumbing work. Fixed the leak quickly and efficiently.",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    jobTitle: "Plumbing Repair"
+  },
+  {
+    id: "3",
+    reviewerName: "Carol Phiri",
+    reviewerAvatar: "CP",
+    rating: 5,
+    comment: "Very satisfied with the painting job. Attention to detail was impressive.",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
+    jobTitle: "House Painting"
+  }
+];
+
+export default function ProfilePage() {
+  const { user, updateUserProfile, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "settings">("overview");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: "",
+    bio: "",
+    location: user?.city || ""
+  });
+
+  const handleSaveProfile = () => {
+    updateUserProfile({
+      name: editForm.name,
+      email: editForm.email,
+      city: editForm.location
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditForm({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: "",
+      bio: "",
+      location: user?.city || ""
+    });
+    setIsEditing(false);
+  };
+
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate("/landing");
+  };
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }).map((_, i) => (
+      <Star
+        key={i}
+        size={16}
+        className={i < rating ? "text-yellow-500 fill-current" : "text-gray-500"}
+      />
+    ));
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#191414] pb-20">
+      {/* Header */}
+      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">My Profile</h1>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="flex items-center gap-2 bg-[#1DB954] text-white px-4 py-2 rounded-xl hover:bg-[#1DB954]/90 transition-colors"
+          >
+            <Edit size={18} />
+            {isEditing ? "Cancel" : "Edit Profile"}
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        {isEditing ? (
+          /* Edit Mode */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#282828] border border-[#404040] rounded-xl p-6"
+          >
+            <h2 className="text-xl font-bold text-white mb-6">Edit Profile</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, location: e.target.value }))}
+                  className="w-full bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Bio</label>
+              <textarea
+                value={editForm.bio}
+                onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                rows={4}
+                className="w-full bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954] resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveProfile}
+                className="flex items-center gap-2 bg-[#1DB954] text-white px-6 py-3 rounded-xl hover:bg-[#1DB954]/90 transition-colors"
+              >
+                <Save size={18} />
+                Save Changes
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="flex items-center gap-2 bg-[#404040] text-white px-6 py-3 rounded-xl hover:bg-[#555555] transition-colors"
+              >
+                <X size={18} />
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          /* View Mode */
+          <div className="space-y-6">
+            {/* Profile Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#282828] border border-[#404040] rounded-xl p-6"
+            >
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                {/* Avatar */}
+                <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 bg-[#1DB954] rounded-full flex items-center justify-center mb-3">
+                    <span className="text-white text-2xl font-bold">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <button className="flex items-center gap-2 text-sm text-[#1DB954] hover:text-[#1DB954]/80 transition-colors">
+                    <Camera size={16} />
+                    Change Photo
+                  </button>
+                </div>
+
+                {/* Basic Info */}
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white mb-1">{user?.name}</h2>
+                      <div className="flex items-center gap-2 text-[#B3B3B3] mb-2">
+                        <MapPin size={16} />
+                        <span>{user?.city}, Malawi</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[#B3B3B3]">
+                        <Mail size={16} />
+                        <span>{user?.email}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user?.verified && (
+                        <span className="flex items-center gap-1 bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-sm">
+                          <CheckCircle size={14} />
+                          Verified
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1 bg-[#1DB954]/20 text-[#1DB954] px-3 py-1 rounded-full text-sm">
+                        <Award size={14} />
+                        {user?.intent === "hire" ? "Client" : user?.intent === "find_work" ? "Worker" : "Both"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {user?.bio && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-white mb-2">About</h3>
+                      <p className="text-[#B3B3B3]">{user.bio}</p>
+                    </div>
+                  )}
+
+                  {user?.skills && user.skills.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-white mb-2">Skills</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {user.skills.map(skill => (
+                          <span key={skill} className="bg-[#1DB954]/20 text-[#1DB954] px-3 py-1 rounded-full text-sm">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-[#282828] border border-[#404040] rounded-xl p-6"
+            >
+              <h3 className="text-lg font-bold text-white mb-4">Performance Stats</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#1DB954]">{mockStats.totalJobs}</div>
+                  <div className="text-sm text-[#B3B3B3]">Total Jobs</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-500">{mockStats.completedJobs}</div>
+                  <div className="text-sm text-[#B3B3B3]">Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-2xl font-bold text-yellow-500">{mockStats.averageRating}</span>
+                    <Star size={20} className="text-yellow-500 fill-current" />
+                  </div>
+                  <div className="text-sm text-[#B3B3B3]">Avg Rating</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-500">MWK {mockStats.totalEarnings.toLocaleString()}</div>
+                  <div className="text-sm text-[#B3B3B3]">Total Earnings</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Tabs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-[#282828] border border-[#404040] rounded-xl"
+            >
+              <div className="flex border-b border-[#404040]">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={`flex-1 px-4 py-3 font-medium transition-colors ${
+                    activeTab === "overview" 
+                      ? "text-[#1DB954] border-b-2 border-[#1DB954]" 
+                      : "text-[#B3B3B3] hover:text-white"
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab("reviews")}
+                  className={`flex-1 px-4 py-3 font-medium transition-colors ${
+                    activeTab === "reviews" 
+                      ? "text-[#1DB954] border-b-2 border-[#1DB954]" 
+                      : "text-[#B3B3B3] hover:text-white"
+                  }`}
+                >
+                  Reviews
+                </button>
+                <button
+                  onClick={() => setActiveTab("settings")}
+                  className={`flex-1 px-4 py-3 font-medium transition-colors ${
+                    activeTab === "settings" 
+                      ? "text-[#1DB954] border-b-2 border-[#1DB954]" 
+                      : "text-[#B3B3B3] hover:text-white"
+                  }`}
+                >
+                  Settings
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-6">
+                {activeTab === "overview" && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-white mb-3">Recent Activity</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 bg-[#191414] rounded-lg">
+                        <Briefcase size={20} className="text-[#1DB954]" />
+                        <div>
+                          <p className="text-white font-medium">Completed electrical installation</p>
+                          <p className="text-sm text-[#B3B3B3]">2 days ago • MWK 25,000</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-[#191414] rounded-lg">
+                        <TrendingUp size={20} className="text-green-500" />
+                        <div>
+                          <p className="text-white font-medium">Received 5-star review</p>
+                          <p className="text-sm text-[#B3B3B3]">5 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "reviews" && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-white mb-3">Customer Reviews</h3>
+                    {mockReviews.map(review => (
+                      <div key={review.id} className="border border-[#404040] rounded-lg p-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-10 h-10 bg-[#404040] rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold">{review.reviewerAvatar}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-medium text-white">{review.reviewerName}</h4>
+                              <span className="text-xs text-[#B3B3B3]">{formatDate(review.date)}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {renderStars(review.rating)}
+                            </div>
+                            <p className="text-sm text-[#B3B3B3] mb-1">{review.comment}</p>
+                            <p className="text-xs text-[#1DB954]">{review.jobTitle}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === "settings" && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-white mb-3">Account Settings</h3>
+                    <div className="space-y-3">
+                      <button className="w-full flex items-center justify-between p-3 bg-[#191414] rounded-lg hover:bg-[#333333] transition-colors">
+                        <span className="text-white">Email Notifications</span>
+                        <Settings size={18} className="text-[#B3B3B3]" />
+                      </button>
+                      <button className="w-full flex items-center justify-between p-3 bg-[#191414] rounded-lg hover:bg-[#333333] transition-colors">
+                        <span className="text-white">Privacy Settings</span>
+                        <Settings size={18} className="text-[#B3B3B3]" />
+                      </button>
+                      <button className="w-full flex items-center justify-between p-3 bg-[#191414] rounded-lg hover:bg-[#333333] transition-colors">
+                        <span className="text-white">Payment Methods</span>
+                        <Settings size={18} className="text-[#B3B3B3]" />
+                      </button>
+                      
+                      {/* Logout Button */}
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-between p-3 bg-red-500/10 border border-red-500/30 rounded-lg hover:bg-red-500/20 transition-colors mt-6"
+                      >
+                        <span className="text-red-500 font-semibold">Logout</span>
+                        <LogOut size={18} className="text-red-500" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </main>
+      
+      {/* Navigation */}
+      <AppNavigation />
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        title="Logout Confirmation"
+        message="Are you sure you want to logout? You will be redirected to the landing page."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="danger"
+      />
+    </div>
+  );
+}
