@@ -40,3 +40,102 @@ Search functionality
 Category filtering (Plumbing, Electrical, Cleaning, Tutoring, Moving, Carpentry, Painting, Cooking)
 User profile management
 Location-based services
+
+
+ ALL SYSTEM PAGES (IMPORTANT)
+🔐 Auth Pages
+Login
+
+Register (choose role: client / worker / skilled)
+
+OTP Verification
+
+Forgot Password
+
+🏠 General Pages
+Home (job feed)
+
+Search / Explore
+
+Notifications
+
+Messages (chat list)
+
+Chat screen
+
+👤 User Profile
+View Profile
+
+Edit Profile
+
+Ratings & Reviews
+
+💼 Job System
+Post Job
+
+Job Details
+
+My Jobs (posted)
+
+Applications List
+
+Apply to Job
+
+🧑‍🔧 Skilled Workers Directory (NEW FEATURE)
+For Skilled Worker:
+Create Professional Profile
+
+Upload Certificates
+
+Skills & Experience Form
+
+Approval Status Page
+
+For Clients:
+Browse Skilled Workers
+
+Filter (location, skill, rating)
+
+Skilled Worker Profile View
+
+🛠️ Admin Panel (WEB ONLY)
+Dashboard
+
+User Management
+
+Skilled Worker Approvals
+
+Reports / Complaints
+
+Job Monitoring
+
+💳 (Future Pages – Payments)
+Wallet / Payments
+
+Transaction History
+
+⚠️ Important Architecture Tips
+Keep backend separate → reusable for both web & mobile
+
+Use REST API (or GraphQL later)
+
+Centralize:
+
+Auth
+
+Validation
+
+Error handling
+
+✅ Error-Free / Clean Setup Tips
+Use .env for configs (DB, API keys)
+
+Use MVC structure in backend
+
+Add:
+
+Global error handler
+
+Input validation (Joi / express-validator)
+
+Use consistent naming across web & mobile
