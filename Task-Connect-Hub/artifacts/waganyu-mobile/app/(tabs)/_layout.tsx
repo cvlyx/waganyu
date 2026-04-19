@@ -10,18 +10,34 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import { useData } from "@/context/DataContext";
+import { useAuth } from "@/context/AuthContext";
 
 function NativeTabLayout() {
+  const { user } = useAuth();
+  
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="workers">
-        <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
-        <Label>Workers</Label>
-      </NativeTabs.Trigger>
+      
+      {/* Show Workers tab for hirers and both roles */}
+      {(user?.intent === "hire" || user?.intent === "both") && (
+        <NativeTabs.Trigger name="workers">
+          <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
+          <Label>Workers</Label>
+        </NativeTabs.Trigger>
+      )}
+      
+      {/* Show Jobs tab for job seekers and both roles */}
+      {(user?.intent === "find_work" || user?.intent === "both") && (
+        <NativeTabs.Trigger name="jobs">
+          <Icon sf={{ default: "briefcase", selected: "briefcase.fill" }} />
+          <Label>Jobs</Label>
+        </NativeTabs.Trigger>
+      )}
+      
       <NativeTabs.Trigger name="messages">
         <Icon sf={{ default: "message", selected: "message.fill" }} />
         <Label>Messages</Label>
@@ -45,6 +61,7 @@ function ClassicTabLayout() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const { unreadMessageCount, unreadNotificationCount } = useData();
+  const { user } = useAuth();
 
   return (
     <Tabs
@@ -101,18 +118,37 @@ function ClassicTabLayout() {
             ),
         }}
       />
-      <Tabs.Screen
-        name="workers"
-        options={{
-          title: "Workers",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="person.2" tintColor={color} size={24} />
-            ) : (
-              <Feather name="users" size={22} color={color} />
-            ),
-        }}
-      />
+      {/* Show Workers tab for hirers and both roles */}
+      {(user?.intent === "hire" || user?.intent === "both") && (
+        <Tabs.Screen
+          name="workers"
+          options={{
+            title: "Workers",
+            tabBarIcon: ({ color }) =>
+              isIOS ? (
+                <SymbolView name="person.2" tintColor={color} size={24} />
+              ) : (
+                <Feather name="users" size={22} color={color} />
+              ),
+          }}
+        />
+      )}
+      
+      {/* Show Jobs tab for job seekers and both roles */}
+      {(user?.intent === "find_work" || user?.intent === "both") && (
+        <Tabs.Screen
+          name="jobs"
+          options={{
+            title: "Jobs",
+            tabBarIcon: ({ color }) =>
+              isIOS ? (
+                <SymbolView name="briefcase" tintColor={color} size={24} />
+              ) : (
+                <Feather name="briefcase" size={22} color={color} />
+              ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="messages"
         options={{

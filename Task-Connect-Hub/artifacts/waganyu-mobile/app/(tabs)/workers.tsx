@@ -21,6 +21,7 @@ export default function WorkersScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
 
   const filtered = workers.filter(w =>
+    w && w.name && w.skills && // Add null checks
     (!search || w.name.toLowerCase().includes(search.toLowerCase()) || w.skills.some(s => s.toLowerCase().includes(search.toLowerCase())))
     && (skill === "All" || w.skills.includes(skill))
     && (!verified || w.isVerified)

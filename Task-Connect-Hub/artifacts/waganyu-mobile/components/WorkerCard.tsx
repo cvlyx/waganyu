@@ -19,7 +19,7 @@ export function WorkerCard({ worker, horizontal = false }: Props) {
     router.push(`/worker/${worker.id}` as any);
   }
 
-  const initials = worker.name.split(" ").map((n) => n[0]).join("").slice(0, 2);
+  const initials = worker.name ? worker.name.split(" ").map((n) => n[0]).join("").slice(0, 2) : "??";
 
   return (
     <Animated.View style={animStyle}>
