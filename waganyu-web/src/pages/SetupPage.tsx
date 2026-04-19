@@ -31,6 +31,9 @@ const ALL_SKILLS = [
   "Driving", "Security", "Photography", "Tailoring", "Masonry",
 ];
 
+// Service categories for hirers (same skills but labeled as services they need)
+const SERVICE_CATEGORIES = ALL_SKILLS;
+
 const CITIES = [
   "Lilongwe", "Blantyre", "Mzuzu", "Zomba", "Kasungu",
   "Mangochi", "Salima", "Dedza", "Ntcheu", "Karonga",
@@ -325,14 +328,39 @@ export default function SetupPage() {
                   </h2>
                   <p className="text-sm text-[#B3B3B3] mb-8">
                     {setupData.intent === "hire"
-                      ? "Pick the categories you're likely to post jobs in."
+                      ? "Pick the categories you're likely to post jobs in. This helps us show you relevant workers."
                       : "Select all that apply -- this helps match you with the right jobs."}
                     {" "}You can skip this for now.
                   </p>
+                  
+                  {/* Role-specific information */}
+                  {setupData.intent === "hire" && (
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mb-4">
+                      <p className="text-sm text-blue-400">
+                        <strong>Note:</strong> As a hirer, you'll be able to post jobs in these categories but won't be able to apply for work yourself.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {setupData.intent === "find_work" && (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 mb-4">
+                      <p className="text-sm text-green-400">
+                        <strong>Note:</strong> As a job seeker, you'll be able to apply for jobs in these areas but won't be able to post jobs yourself.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {setupData.intent === "both" && (
+                    <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 mb-4">
+                      <p className="text-sm text-purple-400">
+                        <strong>Note:</strong> With both roles, you can post jobs and apply for work in all selected categories.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {ALL_SKILLS.map((skill) => {
+                  {(setupData.intent === "hire" ? SERVICE_CATEGORIES : ALL_SKILLS).map((skill) => {
                     const active = setupData.skills.includes(skill);
                     return (
                       <button
@@ -355,7 +383,7 @@ export default function SetupPage() {
                   <div className="flex items-center gap-2 bg-[#1DB954]/10 border border-[#1DB954]/30 px-4 py-2 rounded-full">
                     <CheckCircle size={16} className="text-[#1DB954]" />
                     <span className="text-sm font-medium text-[#1DB954]">
-                      {setupData.skills.length} selected
+                      {setupData.skills.length} {setupData.intent === "hire" ? "service categories" : "skills"} selected
                     </span>
                   </div>
                 )}

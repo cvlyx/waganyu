@@ -80,7 +80,7 @@ export default function RegisterScreen() {
 
             {/* Progress indicator */}
             <Animated.View entering={FadeInDown.delay(150).duration(400)} style={s.progressRow}>
-              {[1, 2, 3].map(step => (
+              {[1, 2, 3, 4, 5].map(step => (
                 <View key={step} style={s.progressItem}>
                   <View style={[s.progressDot, { backgroundColor: step === 1 ? C.primary : C.border }]}>
                     {step === 1
@@ -89,9 +89,9 @@ export default function RegisterScreen() {
                     }
                   </View>
                   <Text style={[s.progressLabel, { color: step === 1 ? C.primary : C.mutedForeground }]}>
-                    {step === 1 ? "Account" : step === 2 ? "Profile" : "Done"}
+                    {step === 1 ? "Account" : step === 2 ? "Profile" : step === 3 ? "Details" : step === 4 ? "Verify" : "Done"}
                   </Text>
-                  {step < 3 && <View style={[s.progressLine, { backgroundColor: C.border }]} />}
+                  {step < 5 && <View style={[s.progressLine, { backgroundColor: C.border }]} />}
                 </View>
               ))}
             </Animated.View>

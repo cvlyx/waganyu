@@ -1,8 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  ArrowLeft, PlusCircle, Zap, AlertCircle
+  ArrowLeft, PlusCircle, Zap, AlertCircle, AlertTriangle
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import AppSidebar from "../components/AppSidebar";
@@ -31,6 +31,9 @@ export default function PostJobPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Check if user can post jobs based on their role
+  const canPostJobs = user?.intent === "hire" || user?.intent === "both";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<JobCategory>("Plumbing");
@@ -44,6 +47,13 @@ export default function PostJobPage() {
     description?: string;
     budget?: string;
   }>({});
+
+  // Redirect users who cannot post jobs
+  React.useEffect(() => {
+    if (!canPostJobs) {
+      navigate("/dashboard");
+    }
+  }, [canPostJobs, navigate]);
 
   const validate = () => {
     const newErrors: typeof errors = {};

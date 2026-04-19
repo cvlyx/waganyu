@@ -3,7 +3,8 @@
  * Step 1: What do you want to do? (intent)
  * Step 2: Your skills / interests
  * Step 3: Your city + how you heard about us
- * Step 4: Short bio (optional) — done!
+ * Step 4: Email OTP verification
+ * Step 5: Short bio (optional) — done!
  */
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -11,7 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView, Platform, ScrollView,
+  Alert, KeyboardAvoidingView, Platform, ScrollView,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from "react-native";
 import Animated, {
@@ -37,6 +38,9 @@ const ALL_SKILLS = [
   "Driving", "Security", "Photography", "Tailoring", "Masonry",
 ];
 
+// Service categories for hirers (same skills but labeled as services they need)
+const SERVICE_CATEGORIES = ALL_SKILLS;
+
 const CITIES = [
   "Lilongwe", "Blantyre", "Mzuzu", "Zomba", "Kasungu",
   "Mangochi", "Salima", "Dedza", "Ntcheu", "Karonga",
@@ -52,7 +56,7 @@ const HEARD_FROM = [
   { label: "Other",            icon: "more-horizontal" },
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 function StepBar({ step }: { step: number }) {
@@ -84,6 +88,12 @@ export default function SetupScreen() {
   const [bio, setBio] = useState("");
   const [focused, setFocused] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // OTP verification states
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
   function toggleSkill(s: string) {
     Haptics.selectionAsync();
@@ -98,6 +108,44 @@ export default function SetupScreen() {
   function back() {
     if (step === 1) { router.back(); return; }
     setStep(s => s - 1);
+  }
+
+  async function sendOTP() {
+    setVerifying(true);
+    // Simulate sending OTP
+    setTimeout(() => {
+      setOtpSent(true);
+      setVerifying(false);
+      setResendTimer(60);
+      // Start countdown timer
+      const timer = setInterval(() => {
+        setResendTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }, 1500);
+  }
+
+  async function verifyOTP() {
+    if (otpCode.length !== 6) {
+      Alert.alert("Invalid Code", "Please enter a 6-digit verification code");
+      return;
+    }
+    setVerifying(true);
+    // Simulate OTP verification
+    setTimeout(() => {
+      setVerifying(false);
+      next(); // Move to next step after successful verification
+    }, 1500);
+  }
+
+  function resendOTP() {
+    if (resendTimer > 0) return;
+    sendOTP();
   }
 
   async function finish() {
@@ -116,6 +164,7 @@ export default function SetupScreen() {
   const canNext = step === 1 ? true
     : step === 2 ? true          // skills optional
     : step === 3 ? city !== ""   // city required
+    : step === 4 ? otpSent && otpCode.length === 6  // OTP verification
     : true;
 
   return (
@@ -134,7 +183,7 @@ export default function SetupScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[s.stepLabel, { color: C.mutedForeground }]}>Step {step} of {TOTAL_STEPS}</Text>
                 <Text style={[s.greeting, { color: C.foreground }]}>
-                  {step === 1 ? `Hi ${user?.name?.split(" ")[0]} 👋` : step === 4 ? "Almost done!" : "Set up your profile"}
+                  {step === 1 ? `Hi ${user?.name?.split(" ")[0]} 👋` : step === 5 ? "Almost done!" : "Set up your profile"}
                 </Text>
               </View>
             </Animated.View>
@@ -174,22 +223,37 @@ export default function SetupScreen() {
             {/* ── Step 2: Skills ── */}
             {step === 2 && (
               <Animated.View entering={FadeInDown.duration(400)}>
-                <Text style={[s.stepTitle, { color: C.foreground }]}>
-                  {intent === "hire" ? "What services do you need?" : "What are your skills?"}
-                </Text>
-                <Text style={[s.stepSub, { color: C.mutedForeground }]}>
-                  {intent === "hire"
-                    ? "Pick the categories you're likely to post jobs in."
-                    : "Select all that apply — this helps match you with the right jobs."}
-                  {" "}You can skip this for now.
-                </Text>
+                <Text style={[s.stepTitle, { color: C.foreground }]}>{intent === "hire" ? "What services do you need?" : "What are your skills?"}</Text>
+                <Text style={[s.stepSub, { color: C.mutedForeground }]}>{intent === "hire" ? "Pick the categories you're likely to post jobs in. This helps us show you relevant workers." : "Select all that apply - this helps match you with the right jobs."} {" "}You can skip this for now.</Text>
+                
+                {/* Role-specific information */}
+                {intent === "hire" && (
+                  <View style={[s.roleNote, { backgroundColor: "#3B82F620", borderColor: "#3B82F650" }]}>
+                    <Feather name="info" size={14} color="#3B82F6" />
+                    <Text style={[s.roleNoteText, { color: "#3B82F6" }]}>As a hirer, you'll be able to post jobs in these categories but won't be able to apply for work yourself.</Text>
+                  </View>
+                )}
+                
+                {intent === "find_work" && (
+                  <View style={[s.roleNote, { backgroundColor: "#10B98120", borderColor: "#10B98150" }]}>
+                    <Feather name="info" size={14} color="#10B981" />
+                    <Text style={[s.roleNoteText, { color: "#10B981" }]}>As a job seeker, you'll be able to apply for jobs in these areas but won't be able to post jobs yourself.</Text>
+                  </View>
+                )}
+                
+                {intent === "both" && (
+                  <View style={[s.roleNote, { backgroundColor: "#8B5CF620", borderColor: "#8B5CF650" }]}>
+                    <Feather name="info" size={14} color="#8B5CF6" />
+                    <Text style={[s.roleNoteText, { color: "#8B5CF6" }]}>With both roles, you can post jobs and apply for work in all selected categories.</Text>
+                  </View>
+                )}
+                
                 <View style={s.skillsGrid}>
-                  {ALL_SKILLS.map(sk => {
+                  {(intent === "hire" ? SERVICE_CATEGORIES : ALL_SKILLS).map(sk => {
                     const active = skills.includes(sk);
                     return (
                       <TouchableOpacity key={sk} onPress={() => toggleSkill(sk)} activeOpacity={0.8}
-                        style={[s.skillChip, { backgroundColor: active ? C.primary : C.surface, borderColor: active ? C.primary : C.border }]}
-                      >
+                        style={[s.skillChip, { backgroundColor: active ? C.primary : C.surface, borderColor: active ? C.primary : C.border }]}>
                         {active && <Feather name="check" size={11} color="#fff" />}
                         <Text style={[s.skillText, { color: active ? "#fff" : C.foreground }]}>{sk}</Text>
                       </TouchableOpacity>
@@ -199,7 +263,7 @@ export default function SetupScreen() {
                 {skills.length > 0 && (
                   <View style={[s.selectedBadge, { backgroundColor: C.primaryLight }]}>
                     <Feather name="check-circle" size={13} color={C.primary} />
-                    <Text style={[s.selectedText, { color: C.primary }]}>{skills.length} selected</Text>
+                    <Text style={[s.selectedText, { color: C.primary }]}>{skills.length} {intent === "hire" ? "service categories" : "skills"} selected</Text>
                   </View>
                 )}
               </Animated.View>
@@ -242,8 +306,81 @@ export default function SetupScreen() {
               </Animated.View>
             )}
 
-            {/* ── Step 4: Bio + finish ── */}
+            {/* ── Step 4: Email OTP verification */}
+
             {step === 4 && (
+              <Animated.View entering={FadeInDown.duration(400)}>
+                <Text style={[s.stepTitle, { color: C.foreground }]}>Verify your email</Text>
+                <Text style={[s.stepSub, { color: C.mutedForeground }]}>We sent a 6-digit code to {user?.email}. Enter it below to verify your account.</Text>
+
+                {/* Send OTP button if not sent */}
+                {!otpSent && (
+                  <TouchableOpacity onPress={sendOTP} disabled={verifying} activeOpacity={0.88} style={{ borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
+                    <LinearGradient colors={["#059669", "#047857"]} style={s.nextBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                      <Text style={s.nextBtnText}>{verifying ? "Sending..." : "Send Verification Code"}</Text>
+                      <Feather name="mail" size={17} color="#fff" />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                )}
+
+                {/* OTP input fields */}
+                {otpSent && (
+                  <>
+                    <View style={s.otpContainer}>
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <TextInput
+                          key={index}
+                          style={[s.otpInput, { borderColor: focused === `otp_${index}` ? C.primary : C.border }]}
+                          value={otpCode[index] || ""}
+                          onChangeText={(text) => {
+                            const newOtp = otpCode.split('');
+                            newOtp[index] = text.slice(-1); // Only take last character
+                            setOtpCode(newOtp.join(''));
+                            // Auto-focus next input
+                            if (text && index < 5) {
+                              // Focus next input
+                            }
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={1}
+                          textAlign="center"
+                          secureTextEntry={false}
+                          onFocus={() => setFocused(`otp_${index}`)}
+                          onBlur={() => setFocused(null)}
+                        />
+                      ))}
+                    </View>
+
+                    <Text style={[s.otpHint, { color: C.mutedForeground }]}>
+                      Enter the 6-digit code sent to your email
+                    </Text>
+
+                    {/* Resend option */}
+                    <View style={s.resendContainer}>
+                      <Text style={[s.resendText, { color: C.mutedForeground }]}>
+                        Didn't receive the code?
+                      </Text>
+                      <TouchableOpacity onPress={resendOTP} disabled={resendTimer > 0 || verifying} activeOpacity={0.7}>
+                        <Text style={[s.resendLink, { color: resendTimer > 0 ? C.mutedForeground : C.primary }]}>
+                          {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Verify button */}
+                    <TouchableOpacity onPress={verifyOTP} disabled={verifying || otpCode.length !== 6} activeOpacity={0.88} style={{ borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
+                      <LinearGradient colors={["#059669", "#047857"]} style={s.nextBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                        <Text style={s.nextBtnText}>{verifying ? "Verifying..." : "Verify Email"}</Text>
+                        <Feather name="check-circle" size={17} color="#fff" />
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </Animated.View>
+            )}
+
+            {/* Step 5: Bio + finish */}
+            {step === 5 && (
               <Animated.View entering={FadeInDown.duration(400)}>
                 <Text style={[s.stepTitle, { color: C.foreground }]}>Tell people about yourself</Text>
                 <Text style={[s.stepSub, { color: C.mutedForeground }]}>A short bio helps build trust. You can skip this and add it later from your profile.</Text>
@@ -357,6 +494,10 @@ const s = StyleSheet.create({
   selectedBadge: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   selectedText: { fontSize: 12, fontFamily: "Poppins_600SemiBold" },
 
+  // Role notes
+  roleNote: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
+  roleNoteText: { fontSize: 12, fontFamily: "Poppins_400Regular", lineHeight: 16, flex: 1 },
+
   // City
   label: { fontSize: 12, fontFamily: "Poppins_600SemiBold", letterSpacing: 0.4, marginBottom: 10 },
   cityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -378,6 +519,23 @@ const s = StyleSheet.create({
   summaryTitle: { fontSize: 12, fontFamily: "Poppins_700Bold", letterSpacing: 0.5, marginBottom: 4 },
   summaryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   summaryText: { fontSize: 13, fontFamily: "Poppins_400Regular" },
+
+  // OTP Verification
+  otpContainer: { flexDirection: "row", justifyContent: "center", gap: 12, marginBottom: 20 },
+  otpInput: { 
+    width: 45, 
+    height: 55, 
+    borderRadius: 12, 
+    borderWidth: 2, 
+    fontSize: 20, 
+    fontFamily: "Poppins_700Bold", 
+    textAlign: "center",
+    backgroundColor: "transparent"
+  },
+  otpHint: { fontSize: 13, fontFamily: "Poppins_400Regular", textAlign: "center", marginBottom: 20 },
+  resendContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 4, marginBottom: 20 },
+  resendText: { fontSize: 13, fontFamily: "Poppins_400Regular" },
+  resendLink: { fontSize: 13, fontFamily: "Poppins_600SemiBold", textDecorationLine: "underline" },
 
   // Buttons
   btnRow: { flexDirection: "row", gap: 10, marginTop: 28 },

@@ -199,24 +199,140 @@ export default function LandingScreen() {
           <Feature icon="message-circle" title="In-App Messaging"       desc="Chat directly with workers, share photos, and coordinate easily."             delay={1080} />
         </View>
 
-        {/* ── Bottom CTA ── */}
-        <Animated.View entering={FadeInUp.delay(1100).duration(600)} style={[s.bottomCta, { backgroundColor: C.card, borderColor: C.border }]}>
-          <LinearGradient colors={[C.primaryLight, C.surface]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-          <View style={s.bottomCtaInner}>
-            <Text style={[s.bottomCtaTitle, { color: C.foreground }]}>Ready to get started?</Text>
-            <Text style={[s.bottomCtaSub, { color: C.mutedForeground }]}>Join thousands of Malawians already using Waganyu</Text>
+        {/* How It Works */}
+        <Animated.View entering={FadeInDown.delay(1100).duration(500)} style={s.section}>
+          <Animated.Text entering={FadeInDown.delay(1100).duration(500)} style={[s.sectionLabel, { color: C.primary }]}>
+            HOW IT WORKS
+          </Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(1150).duration(500)} style={[s.sectionTitle, { color: C.foreground }]} >
+            Get started in three simple steps
+          </Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(1200).duration(500)} style={[s.sectionSub, { color: C.mutedForeground }]}>
+            From posting your job to getting it done - we've made the entire process seamless and secure
+          </Animated.Text>
+          
+          {/* Steps */}
+          <View style={s.stepsContainer}>
+            {[
+              {
+                icon: "search",
+                title: "Post a Job",
+                desc: "Describe what you need, set your budget, and choose a category. Takes less than 2 minutes.",
+                step: 1
+              },
+              {
+                icon: "users",
+                title: "Get Applications", 
+                desc: "Verified professionals near you apply. Browse profiles, ratings, and reviews.",
+                step: 2
+              },
+              {
+                icon: "shield",
+                title: "Hire & Pay Safely",
+                desc: "Chat, agree on terms, and pay securely through the app. Funds released on completion.",
+                step: 3
+              }
+            ].map((step, index) => (
+              <Animated.View 
+                key={step.title}
+                entering={FadeInDown.delay(1250 + index * 100).duration(500)}
+                style={[s.stepCard, { backgroundColor: C.card, borderColor: C.border }]}
+              >
+                <View style={[s.stepNumber, { backgroundColor: C.primary }]} >
+                  <Text style={s.stepNumberText}>{step.step}</Text>
+                </View>
+                <LinearGradient colors={[C.primary, "#047857"]} style={s.stepIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Feather name={step.icon as any} size={20} color="#fff" />
+                </LinearGradient>
+                <View style={s.stepContent}>
+                  <Text style={[s.stepTitle, { color: C.foreground }]}>{step.title}</Text>
+                  <Text style={[s.stepDesc, { color: C.mutedForeground }]}>{step.desc}</Text>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* Testimonials */}
+        <Animated.View entering={FadeInDown.delay(1400).duration(500)} style={[s.section, { backgroundColor: C.card }]}>
+          <Animated.Text entering={FadeInDown.delay(1400).duration(500)} style={[s.sectionLabel, { color: C.primary }]}>
+            TESTIMONIALS
+          </Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(1450).duration(500)} style={[s.sectionTitle, { color: C.foreground }]} >
+            Trusted across Malawi
+          </Animated.Text>
+          
+          <View style={s.testimonialsContainer}>
+            {[
+              {
+                name: "Chisomo Phiri",
+                city: "Lilongwe", 
+                role: "Homeowner",
+                text: "Found a plumber within 30 minutes. Excellent work and very professional. Will use Waganyu again!",
+                rating: 5
+              },
+              {
+                name: "Tadala Banda",
+                city: "Blantyre",
+                role: "Business Owner", 
+                text: "We use Waganyu for all our office maintenance. The quality of workers is consistently high.",
+                rating: 5
+              },
+              {
+                name: "Kondwani Mwale",
+                city: "Mzuzu",
+                role: "Electrician",
+                text: "As a worker, Waganyu has transformed my income. I get steady jobs and the payment system is reliable.",
+                rating: 5
+              }
+            ].map((testimonial, index) => (
+              <Animated.View 
+                key={testimonial.name}
+                entering={FadeInDown.delay(1500 + index * 100).duration(500)}
+                style={[s.testimonialCard, { backgroundColor: C.background, borderColor: C.border }]}
+              >
+                <View style={s.starsContainer}>
+                  {Array.from({ length: testimonial.rating }).map((_, i) => (
+                    <Feather key={i} name="star" size={12} color={C.primary} fill={C.primary} />
+                  ))}
+                </View>
+                <Text style={[s.testimonialText, { color: C.foreground }]} > "{testimonial.text}" </Text>
+                <View style={[s.testimonialAuthor, { borderTopColor: C.border }]} >
+                  <View style={[s.authorAvatar, { backgroundColor: C.primaryLight }]} >
+                    <Text style={[s.authorAvatarText, { color: C.primary }]} >
+                      {testimonial.name.split(" ").map(n => n[0]).join("")}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={[s.authorName, { color: C.foreground }]}>{testimonial.name}</Text>
+                    <Text style={[s.authorRole, { color: C.mutedForeground }]}>{testimonial.role} · {testimonial.city}</Text>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* CTA Banner */}
+        <Animated.View entering={FadeInUp.delay(1700).duration(600)} style={s.ctaBanner}>
+          <LinearGradient colors={[C.primary, "#047857"]} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+          <View style={s.ctaBannerInner}>
+            <Text style={s.ctaBannerLabel}>READY TO GET STARTED?</Text>
+            <Text style={s.ctaBannerTitle}>Join thousands of Malawians already using Waganyu</Text>
+            <Text style={s.ctaBannerSub}>Whether you need to hire someone or find work Waganyu connects you with the right people, fast.</Text>
             <TouchableOpacity onPress={() => go("/(auth)/register")} activeOpacity={0.9} style={{ borderRadius: 12, overflow: "hidden", width: "100%" }}>
-              <LinearGradient colors={[C.primary, "#047857"]} style={s.ctaPrimary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                <Text style={s.ctaPrimaryText}>Create Free Account</Text>
-                <Feather name="arrow-right" size={17} color="#fff" />
+              <LinearGradient colors={["#ffffff", "#ffffff"]} style={s.ctaBannerButton} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Feather name="zap" size={18} color={C.primary} />
+                <Text style={[s.ctaBannerButtonText, { color: C.primary }]}>Create Free Account</Text>
+                <Feather name="arrow-right" size={18} color={C.primary} />
               </LinearGradient>
             </TouchableOpacity>
           </View>
         </Animated.View>
 
-        {/* ── Footer ── */}
-        <Animated.Text entering={FadeIn.delay(1200).duration(500)} style={[s.footer, { color: C.mutedForeground }]}>
-          WAGANYU DIGITAL EXCELLENCE © 2025
+        {/* Footer */}
+        <Animated.Text entering={FadeIn.delay(1800).duration(500)} style={[s.footer, { color: C.mutedForeground }]}>
+          WAGANYU DIGITAL EXCELLENCE 2025
         </Animated.Text>
 
       </ScrollView>
@@ -278,6 +394,40 @@ const s = StyleSheet.create({
   bottomCtaInner: { padding: 24, alignItems: "center", gap: 8 },
   bottomCtaTitle: { fontSize: 20, fontFamily: "Poppins_700Bold", textAlign: "center" },
   bottomCtaSub: { fontSize: 13, fontFamily: "Poppins_400Regular", textAlign: "center", lineHeight: 20, marginBottom: 16 },
+
+  // Section titles
+  sectionTitle: { fontSize: 24, fontFamily: "Poppins_700Bold", textAlign: "center", marginBottom: 8 },
+  sectionSub: { fontSize: 14, fontFamily: "Poppins_400Regular", textAlign: "center", lineHeight: 20, marginBottom: 24, paddingHorizontal: 16 },
+
+  // How It Works
+  stepsContainer: { gap: 16 },
+  stepCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 8 },
+  stepNumber: { width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  stepNumberText: { fontSize: 12, fontFamily: "Poppins_700Bold", color: "#fff" },
+  stepIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  stepContent: { flex: 1 },
+  stepTitle: { fontSize: 16, fontFamily: "Poppins_600SemiBold", marginBottom: 4 },
+  stepDesc: { fontSize: 13, fontFamily: "Poppins_400Regular", lineHeight: 18 },
+
+  // Testimonials
+  testimonialsContainer: { gap: 16 },
+  testimonialCard: { padding: 16, borderRadius: 16, borderWidth: 1, gap: 12 },
+  starsContainer: { flexDirection: "row", gap: 2 },
+  testimonialText: { fontSize: 14, fontFamily: "Poppins_400Regular", lineHeight: 20, fontStyle: "italic" },
+  testimonialAuthor: { flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 12, borderTopWidth: 1 },
+  authorAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  authorAvatarText: { fontSize: 14, fontFamily: "Poppins_700Bold" },
+  authorName: { fontSize: 14, fontFamily: "Poppins_600SemiBold" },
+  authorRole: { fontSize: 12, fontFamily: "Poppins_400Regular" },
+
+  // CTA Banner
+  ctaBanner: { marginHorizontal: 24, marginTop: 36, borderRadius: 20, overflow: "hidden" },
+  ctaBannerInner: { padding: 32, alignItems: "center", gap: 12 },
+  ctaBannerLabel: { fontSize: 12, fontFamily: "Poppins_700Bold", color: "#ffffff", letterSpacing: 1.5, opacity: 0.8 },
+  ctaBannerTitle: { fontSize: 24, fontFamily: "Poppins_700Bold", color: "#ffffff", textAlign: "center", marginBottom: 8 },
+  ctaBannerSub: { fontSize: 14, fontFamily: "Poppins_400Regular", color: "#ffffff", opacity: 0.8, textAlign: "center", lineHeight: 20, marginBottom: 20 },
+  ctaBannerButton: { height: 52, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12 },
+  ctaBannerButtonText: { fontSize: 16, fontFamily: "Poppins_600SemiBold" },
 
   // Footer
   footer: { textAlign: "center", fontSize: 10, fontFamily: "Poppins_400Regular", letterSpacing: 1.2, marginTop: 28, paddingHorizontal: 24, paddingBottom: 8 },
