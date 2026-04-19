@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  Users, MapPin, Star, Search, Filter, 
-  Briefcase, Clock, CheckCircle, MessageCircle
+  Users, Search, MapPin, Star, MessageCircle, AlertTriangle, Ban
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import AppNavigation from "../components/AppNavigation";
+import AppSidebar from "../components/AppSidebar";
+import LocationRangeSlider from "../components/LocationRangeSlider";
+import { isLocationWithinDistance, calculateDistanceBetweenLocations, formatDistance } from "../utils/distance";
 
 interface Worker {
   id: string;
@@ -19,6 +20,20 @@ interface Worker {
   verified: boolean;
   hourlyRate: number;
   available: boolean;
+  distance?: number; // Distance from user's location in km
+}
+
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  clientName: string;
+  location: string;
+  budget: number;
+  skills: string[];
+  postedAt: string;
+  status: "open" | "in_progress" | "completed";
+  applications: number;
 }
 
 const SKILLS = [
@@ -81,97 +96,232 @@ const mockWorkers: Worker[] = [
   }
 ];
 
+const mockJobs: Job[] = [
+  {
+    id: "1",
+    title: "Kitchen Renovation",
+    description: "Need experienced carpenter for kitchen cabinet installation and countertop replacement",
+    clientName: "Sarah Mwale",
+    location: "Lilongwe",
+    budget: 85000,
+    skills: ["Carpentry", "Installation"],
+    postedAt: "2 hours ago",
+    status: "open",
+    applications: 5
+  },
+  {
+    id: "2",
+    title: "Emergency Plumbing Repair",
+    description: "Burst pipe needs immediate repair in commercial building",
+    clientName: "James Chilombo",
+    location: "Blantyre",
+    budget: 45000,
+    skills: ["Plumbing", "Emergency"],
+    postedAt: "1 hour ago",
+    status: "open",
+    applications: 8
+  },
+  {
+    id: "3",
+    title: "House Cleaning Service",
+    description: "Deep cleaning for 3-bedroom house before moving in",
+    clientName: "Esther Banda",
+    location: "Mzuzu",
+    budget: 25000,
+    skills: ["Cleaning"],
+    postedAt: "3 hours ago",
+    status: "open",
+    applications: 3
+  },
+  {
+    id: "4",
+    title: "Electrical Installation",
+    description: "New electrical wiring for office building - 2 floors",
+    clientName: "Robert Phiri",
+    location: "Zomba",
+    budget: 120000,
+    skills: ["Electrical", "Installation"],
+    postedAt: "5 hours ago",
+    status: "open",
+    applications: 12
+  },
+  {
+    id: "5",
+    title: "Garden Landscaping",
+    description: "Complete garden makeover including lawn, plants, and irrigation",
+    clientName: "Grace Mhango",
+    location: "Kasungu",
+    budget: 65000,
+    skills: ["Gardening", "Landscaping"],
+    postedAt: "1 day ago",
+    status: "open",
+    applications: 6
+  }
+];
+
 export default function WorkersPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSkill, setSelectedSkill] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [sortBy, setSortBy] = useState("rating");
+  const [maxDistance, setMaxDistance] = useState(50); // Default 50km
   const [loading, setLoading] = useState(true);
+
+  // Get user's location (for demo, use a default or from profile)
+  const userLocation = user?.city || "Lilongwe";
+
+  // Determine page content based on user intent
+  const isWorkerView = user?.intent === "find_work" || user?.intent === "both";
+  const isHirerView = user?.intent === "hire" || user?.intent === "both";
+  const pageTitle = user?.intent === "find_work" ? "Find Jobs" : user?.intent === "hire" ? "Browse Workers" : "Find Work & Workers";
 
   useEffect(() => {
     // Simulate API call
     setTimeout(() => {
-      let filtered = mockWorkers.filter(worker => {
-        const matchesSearch = !search || 
-          worker.name.toLowerCase().includes(search.toLowerCase()) ||
-          worker.skills.some(skill => skill.toLowerCase().includes(search.toLowerCase()));
+      // Filter and load workers if in hirer view
+      if (isHirerView) {
+        let filteredWorkers = mockWorkers.filter(worker => {
+          const matchesSearch = !search || 
+            worker.name.toLowerCase().includes(search.toLowerCase()) ||
+            worker.skills.some(skill => skill.toLowerCase().includes(search.toLowerCase()));
+          
+          const matchesSkill = selectedSkill === "All" || worker.skills.includes(selectedSkill);
+          const matchesLocation = selectedLocation === "All" || worker.location === selectedLocation;
+          const matchesDistance = isLocationWithinDistance(userLocation, worker.location, maxDistance);
+          
+          return matchesSearch && matchesSkill && matchesLocation && matchesDistance;
+        });
         
-        const matchesSkill = selectedSkill === "All" || worker.skills.includes(selectedSkill);
-        const matchesLocation = selectedLocation === "All" || worker.location === selectedLocation;
-        
-        return matchesSearch && matchesSkill && matchesLocation;
-      });
+        // Add distance information to each worker
+        filteredWorkers = filteredWorkers.map(worker => {
+          const distance = calculateDistanceBetweenLocations(userLocation, worker.location);
+          return {
+            ...worker,
+            distance: distance || 0
+          };
+        });
 
-      // Sort workers
-      filtered.sort((a, b) => {
-        if (sortBy === "rating") return b.rating - a.rating;
-        if (sortBy === "jobs") return b.jobsCompleted - a.jobsCompleted;
-        if (sortBy === "rate") return a.hourlyRate - b.hourlyRate;
-        return 0;
-      });
+        // Sort workers
+        filteredWorkers.sort((a, b) => {
+          if (sortBy === "rating") return b.rating - a.rating;
+          if (sortBy === "jobs") return b.jobsCompleted - a.jobsCompleted;
+          if (sortBy === "rate") return a.hourlyRate - b.hourlyRate;
+          if (sortBy === "distance") return (a.distance || 0) - (b.distance || 0);
+          return 0;
+        });
 
-      setWorkers(filtered);
+        setWorkers(filteredWorkers);
+      }
+
+      // Filter and load jobs if in worker view
+      if (isWorkerView) {
+        let filteredJobs = mockJobs.filter(job => {
+          const matchesSearch = !search || 
+            job.title.toLowerCase().includes(search.toLowerCase()) ||
+            job.description.toLowerCase().includes(search.toLowerCase()) ||
+            job.skills.some(skill => skill.toLowerCase().includes(search.toLowerCase()));
+          
+          const matchesSkill = selectedSkill === "All" || job.skills.includes(selectedSkill);
+          const matchesLocation = selectedLocation === "All" || job.location === selectedLocation;
+          const matchesDistance = isLocationWithinDistance(userLocation, job.location, maxDistance);
+          
+          return matchesSearch && matchesSkill && matchesLocation && matchesDistance;
+        });
+
+        // Sort jobs
+        filteredJobs.sort((a, b) => {
+          if (sortBy === "budget") return b.budget - a.budget;
+          if (sortBy === "applications") return b.applications - a.applications;
+          return 0;
+        });
+
+        setJobs(filteredJobs);
+      }
+
       setLoading(false);
     }, 800);
-  }, [search, selectedSkill, selectedLocation, sortBy]);
+  }, [search, selectedSkill, selectedLocation, sortBy, maxDistance, isHirerView, isWorkerView, userLocation]);
 
   return (
-    <div className="min-h-screen bg-[#191414]">
-      {/* Header */}
-      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+    <AppSidebar>
+      <div className="min-h-screen bg-[#191414]">
+        {/* Header */}
+        <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-white">Find Workers</h1>
+            <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
             <div className="text-sm text-[#B3B3B3]">
-              {workers.length} workers found
+              {isHirerView && `${workers.length} workers found`}
+              {isWorkerView && `${jobs.length} jobs available`}
+              {user?.intent === "both" && `${workers.length} workers, ${jobs.length} jobs`}
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#B3B3B3]" />
-              <input
-                type="text"
-                placeholder="Search workers by name or skills..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-[#191414] border border-[#404040] rounded-xl pl-10 pr-4 py-3 text-white placeholder-[#B3B3B3] focus:outline-none focus:border-[#1DB954]"
-              />
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#B3B3B3]" />
+                <input
+                  type="text"
+                  placeholder={isHirerView ? "Search workers by name or skills..." : "Search jobs by title or skills..."}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-[#191414] border border-[#404040] rounded-xl px-10 py-3 text-white placeholder-[#B3B3B3] focus:outline-none focus:border-[#1DB954]"
+                />
+              </div>
+              
+              <select
+                value={selectedSkill}
+                onChange={(e) => setSelectedSkill(e.target.value)}
+                className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+              >
+                {SKILLS.map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+              
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+              >
+                {LOCATIONS.map(location => (
+                  <option key={location} value={location}>{location}</option>
+                ))}
+              </select>
+              
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
+              >
+                {isHirerView ? (
+                  <>
+                    <option value="rating">Sort by Rating</option>
+                    <option value="jobs">Sort by Jobs</option>
+                    <option value="rate">Sort by Rate</option>
+                    <option value="distance">Sort by Distance</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="budget">Sort by Budget</option>
+                    <option value="applications">Sort by Applications</option>
+                  </>
+                )}
+              </select>
             </div>
-
-            <select
-              value={selectedSkill}
-              onChange={(e) => setSelectedSkill(e.target.value)}
-              className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
-            >
-              {SKILLS.map(skill => (
-                <option key={skill} value={skill}>{skill}</option>
-              ))}
-            </select>
-
-            <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
-            >
-              {LOCATIONS.map(location => (
-                <option key={location} value={location}>{location}</option>
-              ))}
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-[#191414] border border-[#404040] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#1DB954]"
-            >
-              <option value="rating">Top Rated</option>
-              <option value="jobs">Most Jobs</option>
-              <option value="rate">Lowest Rate</option>
-            </select>
+            
+            {/* Location Range Slider */}
+            <LocationRangeSlider
+              maxDistance={maxDistance}
+              onDistanceChange={setMaxDistance}
+              className="w-full md:w-auto"
+            />
           </div>
         </div>
       </header>
@@ -240,13 +390,27 @@ export default function WorkersPage() {
                 </div>
 
                 {/* Location and Rate */}
-                <div className="flex items-center justify-between mb-4 text-sm text-[#B3B3B3]">
-                  <div className="flex items-center gap-1">
-                    <MapPin size={14} />
-                    <span>{worker.location}</span>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-sm text-[#B3B3B3]">
+                    <div className="flex items-center gap-1">
+                      <MapPin size={14} />
+                      <span>{worker.location}</span>
+                    </div>
+                    {isHirerView && worker.distance !== undefined && (
+                      <span className="text-[#1DB954] font-medium">
+                        {formatDistance(worker.distance)} away
+                      </span>
+                    )}
                   </div>
-                  <div className="font-medium text-white">
-                    MWK {worker.hourlyRate.toLocaleString()}/hr
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="font-medium text-white">
+                      MWK {worker.hourlyRate.toLocaleString()}/hr
+                    </div>
+                    {isHirerView && worker.distance !== undefined && worker.distance <= 10 && (
+                      <span className="bg-green-500/20 text-green-500 px-2 py-1 rounded-full text-xs">
+                        Nearby
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -258,19 +422,30 @@ export default function WorkersPage() {
                   >
                     View Profile
                   </button>
-                  <button className="flex-1 bg-[#404040] text-white py-2 rounded-xl hover:bg-[#555555] transition-colors flex items-center justify-center gap-1">
-                    <MessageCircle size={14} />
-                    Message
-                  </button>
+                  {user?.role === "admin" ? (
+                    <>
+                      <button className="flex-1 bg-orange-500 text-white py-2 rounded-xl hover:bg-orange-500/90 transition-colors flex items-center justify-center gap-1">
+                        <AlertTriangle size={14} />
+                        Suspend
+                      </button>
+                      <button className="flex-1 bg-red-500 text-white py-2 rounded-xl hover:bg-red-500/90 transition-colors flex items-center justify-center gap-1">
+                        <Ban size={14} />
+                        Ban
+                      </button>
+                    </>
+                  ) : (
+                    <button className="flex-1 bg-[#404040] text-white py-2 rounded-xl hover:bg-[#555555] transition-colors flex items-center justify-center gap-1">
+                      <MessageCircle size={14} />
+                      Message
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}
           </div>
         )}
       </main>
-      
-      {/* Navigation */}
-      <AppNavigation />
-    </div>
+      </div>
+    </AppSidebar>
   );
 }

@@ -17,7 +17,9 @@ export interface User {
   avatar?: string;
   rating?: number;
   verified?: boolean;
+  emailVerified?: boolean;
   joinedAt?: string;
+  role?: "user" | "admin";
 }
 
 export interface ProfileSetupData {
@@ -27,6 +29,7 @@ export interface ProfileSetupData {
   location: string;
   heardFrom: string;
   bio?: string;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -84,20 +87,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Simulate API call - replace with actual API integration
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Check for admin credentials
+      const isAdmin = email === "admin@waganyu.com" && _password === "admin123";
+      
       // Mock user data - in real app, this would come from API
       const mockUser: User = {
-        id: "user_" + Date.now(),
-        name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
+        id: isAdmin ? "admin_001" : "user_" + Date.now(),
+        name: isAdmin ? "Admin User" : email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
         email,
-        profileComplete: false, // New users need to complete profile
-        rating: 0,
-        verified: false,
+        profileComplete: isAdmin ? true : false, // Admin doesn't need profile setup
+        rating: isAdmin ? 5 : 0,
+        verified: isAdmin ? true : false,
         joinedAt: new Date().toISOString(),
+        role: isAdmin ? "admin" : "user",
       };
 
       setUser(mockUser);
       localStorage.setItem("waganyu_user", JSON.stringify(mockUser));
-      toast.success("Welcome back to Waganyu!");
+      toast.success(isAdmin ? "Welcome to Admin Panel!" : "Welcome back to Waganyu!");
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
       throw error;
@@ -148,19 +155,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const updatedUser: User = {
         ...user,
-        profileComplete: true,
+        profileComplete: data.emailVerified ? true : user.profileComplete,
         intent: data.intent,
         skills: data.skills,
         city: data.city,
         location: data.location,
         heardFrom: data.heardFrom,
         bio: data.bio,
-        verified: true, // Auto-verify after profile completion
+        verified: data.emailVerified ? true : user.verified,
+        emailVerified: data.emailVerified || user.emailVerified,
       };
 
       setUser(updatedUser);
       localStorage.setItem("waganyu_user", JSON.stringify(updatedUser));
-      toast.success("Profile setup complete! Welcome to Waganyu! ???");
+      if (data.emailVerified) {
+        toast.success("Email verified! Profile setup complete! Welcome to Waganyu! ???");
+      } else {
+        toast.success("Profile setup complete! Welcome to Waganyu! ???");
+      }
     } catch (error) {
       toast.error("Profile setup failed. Please try again.");
       throw error;

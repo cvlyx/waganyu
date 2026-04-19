@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, ArrowRight, Briefcase, Wrench, Zap, CheckCircle, 
   Users, Facebook, MessageCircle, Radio, Search, FileText, MoreHorizontal,
-  MapPin
+  MapPin, Mail, RefreshCw
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -16,6 +16,7 @@ interface SetupData {
   city: string;
   heardFrom: string;
   bio: string;
+  otp: string[];
 }
 
 const INTENTS = [
@@ -45,7 +46,7 @@ const HEARD_FROM = [
   { label: "Other", icon: MoreHorizontal },
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export default function SetupPage() {
   const navigate = useNavigate();
@@ -57,7 +58,12 @@ export default function SetupPage() {
     city: "",
     heardFrom: "",
     bio: "",
+    otp: ["", "", "", "", "", ""],
   });
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [resending, setResending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [focused, setFocused] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -69,6 +75,13 @@ export default function SetupPage() {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+
+  // Send OTP when reaching step 5
+  React.useEffect(() => {
+    if (step === 5 && !otpSent) {
+      sendOTP();
+    }
+  }, [step, otpSent]);
 
   const toggleSkill = (skill: string) => {
     setSetupData(prev => ({
@@ -91,33 +104,106 @@ export default function SetupPage() {
     setStep(s => s - 1);
   };
 
-  const finish = async () => {
-    setSaving(true);
+  const sendOTP = async () => {
+    setResending(true);
     try {
-      await completeProfile({
-        intent: setupData.intent,
-        skills: setupData.skills,
-        city: setupData.city,
-        location: `${setupData.city}, Malawi`,
-        heardFrom: setupData.heardFrom,
-        bio: setupData.bio.trim() || undefined,
-      });
-      
-      // Navigation will be handled by the ProtectedRoute component
+      // Simulate sending OTP - in real app, this would call an API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setOtpSent(true);
+      setOtpError("");
     } catch (error) {
-      // Error is already handled by the completeProfile function
+      setOtpError("Failed to send OTP. Please try again.");
     } finally {
-      setSaving(false);
+      setResending(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    setVerifying(true);
+    setOtpError("");
+    
+    try {
+      const otpCode = setupData.otp.join("");
+      
+      // Simulate OTP verification - in real app, this would call an API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // For demo, accept any 6-digit code
+      if (otpCode.length === 6) {
+        // Complete profile setup
+        await completeProfile({
+          intent: setupData.intent,
+          skills: setupData.skills,
+          city: setupData.city,
+          location: `${setupData.city}, Malawi`,
+          heardFrom: setupData.heardFrom,
+          bio: setupData.bio.trim() || undefined,
+          emailVerified: true,
+        });
+      } else {
+        setOtpError("Invalid OTP code");
+      }
+    } catch (error) {
+      setOtpError("Verification failed. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const finish = async () => {
+    if (step === 5) {
+      await verifyOTP();
+    } else {
+      setSaving(true);
+      try {
+        await completeProfile({
+          intent: setupData.intent,
+          skills: setupData.skills,
+          city: setupData.city,
+          location: `${setupData.city}, Malawi`,
+          heardFrom: setupData.heardFrom,
+          bio: setupData.bio.trim() || undefined,
+        });
+        
+        // Navigation will be handled by the ProtectedRoute component
+      } catch (error) {
+        // Error is already handled by the completeProfile function
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
   const canNext = step === 1 ? true 
     : step === 2 ? true 
     : step === 3 ? setupData.city !== "" 
+    : step === 4 ? true
+    : step === 5 ? setupData.otp.every(digit => digit !== "")
     : true;
 
   const updateSetupData = (key: keyof SetupData, value: any) => {
     setSetupData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length <= 1 && /^[0-9]*$/.test(value)) {
+      const newOtp = [...setupData.otp];
+      newOtp[index] = value;
+      setSetupData(prev => ({ ...prev, otp: newOtp }));
+      
+      // Auto-focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
+        if (nextInput) nextInput.focus();
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !setupData.otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
+      if (prevInput) prevInput.focus();
+    }
   };
 
   return (
@@ -148,7 +234,7 @@ export default function SetupPage() {
             <div className="flex-1">
               <p className="text-xs font-medium text-[#B3B3B3] tracking-wide">Step {step} of {TOTAL_STEPS}</p>
               <h1 className="text-xl font-bold text-white">
-                {step === 1 ? "Hi there! ??? " : step === 4 ? "Almost done!" : "Set up your profile"}
+                {step === 1 ? "Hi there! ??? " : step === 5 ? "Verify your email" : step === 4 ? "Almost done!" : "Set up your profile"}
               </h1>
             </div>
           </motion.div>
@@ -416,6 +502,82 @@ export default function SetupPage() {
                 </div>
               </motion.div>
             )}
+
+            {/* Step 5: OTP Verification */}
+            {step === 5 && (
+              <motion.div
+                key="step5"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-[#1DB954]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail size={32} className="text-[#1DB954]" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-3">Verify your email address</h2>
+                  <p className="text-sm text-[#B3B3B3] mb-8">
+                    We've sent a 6-digit verification code to {user?.email || "your email address"}. 
+                    Enter the code below to complete your account setup.
+                  </p>
+                </div>
+
+                {/* OTP Input */}
+                <div className="flex justify-center gap-2">
+                  {setupData.otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`otp-${index}`}
+                      type="text"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className={`w-12 h-12 text-center text-lg font-bold rounded-xl border-2 bg-[#282828] text-white transition-colors ${
+                        focused && document.activeElement?.id === `otp-${index}`
+                          ? "border-[#1DB954]"
+                          : "border-[#404040]"
+                      }`}
+                      maxLength={1}
+                    />
+                  ))}
+                </div>
+
+                {/* Error message */}
+                {otpError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+                    <p className="text-sm text-red-400 text-center">{otpError}</p>
+                  </div>
+                )}
+
+                {/* Resend OTP */}
+                <div className="text-center">
+                  <p className="text-sm text-[#B3B3B3] mb-3">
+                    Didn't receive the code?
+                  </p>
+                  <button
+                    onClick={sendOTP}
+                    disabled={resending}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#1DB954] hover:text-[#1DB954]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw size={14} className={resending ? "animate-spin" : ""} />
+                    {resending ? "Sending..." : "Resend code"}
+                  </button>
+                </div>
+
+                {/* Email display */}
+                <div className="bg-[#1DB954]/10 border border-[#1DB954]/30 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <Mail size={16} className="text-[#1DB954]" />
+                    <div>
+                      <p className="text-xs font-medium text-[#B3B3B3]">Verification sent to:</p>
+                      <p className="text-sm font-semibold text-white">{user?.email || "your email"}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* Navigation buttons */}
@@ -445,17 +607,35 @@ export default function SetupPage() {
               <div className="w-full space-y-3">
                 <button
                   onClick={finish}
-                  disabled={saving}
+                  disabled={saving || verifying}
                   className="w-full h-12 bg-gradient-to-r from-[#059669] to-[#047857] text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? "Setting up..." : "Finish Setup ???"}
+                  {step === 5 ? (
+                    verifying ? "Verifying..." : "Verify Email"
+                  ) : (
+                    saving ? "Setting up..." : "Continue to Email Verification"
+                  )}
+                  {step === 5 ? (
+                    <CheckCircle size={17} />
+                  ) : (
+                    <ArrowRight size={17} />
+                  )}
                 </button>
-                <button
-                  onClick={finish}
-                  className="w-full text-sm font-medium text-[#B3B3B3] hover:text-white transition-colors py-2"
-                >
-                  Skip for now -- I'll complete later
-                </button>
+                {step === 5 ? (
+                  <button
+                    onClick={() => setStep(4)}
+                    className="w-full text-sm font-medium text-[#B3B3B3] hover:text-white transition-colors py-2"
+                  >
+                    Back to profile setup
+                  </button>
+                ) : (
+                  <button
+                    onClick={finish}
+                    className="w-full text-sm font-medium text-[#B3B3B3] hover:text-white transition-colors py-2"
+                  >
+                    Skip for now -- I'll complete later
+                  </button>
+                )}
               </div>
             )}
           </div>

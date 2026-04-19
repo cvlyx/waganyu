@@ -16,6 +16,13 @@ import ChatPage from "./pages/ChatPage";
 import PostJobPage from "./pages/PostJobPage";
 import MyJobsPage from "./pages/MyJobsPage";
 
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import SkilledWorkerApprovals from "./pages/admin/SkilledWorkerApprovals";
+import ReportsComplaints from "./pages/admin/ReportsComplaints";
+import JobMonitoring from "./pages/admin/JobMonitoring";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -83,6 +90,33 @@ function AppRoutes() {
       <Route path="/post-job" element={
         <ProtectedRoute requireProfileComplete>
           <PostJobPage />
+        </ProtectedRoute>
+      } />
+      
+      {/* Admin routes - requires admin role */}
+      <Route path="/admin" element={
+        <ProtectedRoute requireProfileComplete requireAdmin>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/users" element={
+        <ProtectedRoute requireProfileComplete requireAdmin>
+          <UserManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/approvals" element={
+        <ProtectedRoute requireProfileComplete requireAdmin>
+          <SkilledWorkerApprovals />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/reports" element={
+        <ProtectedRoute requireProfileComplete requireAdmin>
+          <ReportsComplaints />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/jobs" element={
+        <ProtectedRoute requireProfileComplete requireAdmin>
+          <JobMonitoring />
         </ProtectedRoute>
       } />
       

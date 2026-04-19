@@ -5,9 +5,10 @@ import { useAuth } from "../context/AuthContext";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireProfileComplete?: boolean;
+  requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requireProfileComplete = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireProfileComplete = false, requireAdmin = false }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -30,6 +31,11 @@ export function ProtectedRoute({ children, requireProfileComplete = false }: Pro
   if (requireProfileComplete && !user.profileComplete) {
     // Redirect to setup if profile is not complete
     return <Navigate to="/setup" state={{ from: location }} replace />;
+  }
+
+  if (requireAdmin && user.role !== "admin") {
+    // Redirect to dashboard if not admin
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

@@ -5,7 +5,7 @@ import {
   Users, Star, Clock, X, Check, Filter
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import AppNavigation from "../components/AppNavigation";
+import AppSidebar from "../components/AppSidebar";
 
 interface Notification {
   id: string;
@@ -128,9 +128,10 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen bg-[#191414]">
-      {/* Header */}
-      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+    <AppSidebar>
+      <div className="min-h-screen bg-[#191414]">
+        {/* Header */}
+        <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -258,9 +259,7 @@ export default function NotificationsPage() {
           </div>
         )}
       </main>
-      
-      {/* Navigation */}
-      <AppNavigation />
-    </div>
+      </div>
+    </AppSidebar>
   );
 }

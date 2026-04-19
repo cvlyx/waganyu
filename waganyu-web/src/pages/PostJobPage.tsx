@@ -5,7 +5,7 @@ import {
   ArrowLeft, PlusCircle, Zap, AlertCircle
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import AppNavigation from "../components/AppNavigation";
+import AppSidebar from "../components/AppSidebar";
 
 type JobCategory = 
   | "Plumbing"
@@ -98,9 +98,10 @@ export default function PostJobPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#191414] pb-20">
-      {/* Header */}
-      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+    <AppSidebar>
+      <div className="min-h-screen bg-[#191414]">
+        {/* Header */}
+        <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
@@ -317,9 +318,7 @@ export default function PostJobPage() {
           </button>
         </motion.form>
       </main>
-
-      {/* Navigation */}
-      <AppNavigation />
-    </div>
+      </div>
+    </AppSidebar>
   );
 }

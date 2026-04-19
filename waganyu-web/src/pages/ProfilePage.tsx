@@ -7,7 +7,7 @@ import {
   CheckCircle, X, Upload, Save, LogOut
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import AppNavigation from "../components/AppNavigation";
+import AppSidebar from "../components/AppSidebar";
 import ConfirmModal from "../components/ConfirmModal";
 
 interface ProfileStats {
@@ -118,9 +118,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#191414] pb-20">
-      {/* Header */}
-      <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
+    <AppSidebar>
+      <div className="min-h-screen bg-[#191414]">
+        {/* Header */}
+        <header className="bg-[#282828] border-b border-[#404040] px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">My Profile</h1>
           <button
@@ -440,21 +441,7 @@ export default function ProfilePage() {
           </div>
         )}
       </main>
-      
-      {/* Navigation */}
-      <AppNavigation />
-
-      {/* Logout Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        onConfirm={confirmLogout}
-        title="Logout Confirmation"
-        message="Are you sure you want to logout? You will be redirected to the landing page."
-        confirmText="Logout"
-        cancelText="Cancel"
-        type="danger"
-      />
-    </div>
+      </div>
+    </AppSidebar>
   );
 }
